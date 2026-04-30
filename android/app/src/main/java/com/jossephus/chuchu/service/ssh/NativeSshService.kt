@@ -155,7 +155,7 @@ class NativeSshService(
 
     fun openShell(cols: Int, rows: Int, widthPx: Int, heightPx: Int) {
         check(handle != 0L) { "Not connected" }
-        if (!bridge.nativeOpenShell(handle, cols, rows, widthPx, heightPx, "xterm-kitty")) {
+        if (!bridge.nativeOpenShell(handle, cols, rows, widthPx, heightPx, "xterm-256color")) {
             throw IllegalStateException(bridge.nativeGetLastError(handle) ?: "Native SSH shell open failed")
         }
     }
