@@ -9,7 +9,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.jossephus.chuchu.R
+import com.jossephus.ghossh.R
 
 class SessionForegroundService : Service() {
     override fun onCreate() {

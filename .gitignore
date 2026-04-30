@@ -19,5 +19,13 @@ android/app/key.jks
 /build
 /captures
 
+# Root-level Gradle duplicates (android/ already has tracked wrapper)
+/gradlew
+/gradlew.bat
+/gradle/
+/settings.gradle.kts
+
 # Zig
 zig-src/.zig-cache/
+zig-src/zig-pkg/
+zig-src/test_*

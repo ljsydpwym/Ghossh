@@ -1,6 +1,6 @@
 package com.jossephus.chuchu.ui.terminal
 
-import com.jossephus.chuchu.R
+import com.jossephus.ghossh.R
 
 import android.graphics.Paint
 import android.graphics.Rect

@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.jossephus.chuchu"
+    namespace = "com.jossephus.ghossh"
     compileSdk {
         version = release(36)
     }
@@ -19,11 +19,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.jossephus.chuchu"
+        applicationId = "com.jossephus.ghossh"
         minSdk = 24
         targetSdk = 36
         versionCode = 2
-        versionName = "0.1.2"
+        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -34,7 +34,7 @@ android {
 
     signingConfigs {
         create("release") {
-            val keystoreFile = file("key.jks")
+            val keystoreFile = file("ghossh-key.jks")
             val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
             val keyAliasEnv = System.getenv("KEY_ALIAS")
             val keyPasswordEnv = System.getenv("KEY_PASSWORD")
@@ -49,6 +49,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-D"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
