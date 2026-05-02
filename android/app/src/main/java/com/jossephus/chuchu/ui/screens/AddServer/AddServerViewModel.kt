@@ -243,7 +243,7 @@ class AddServerViewModel(
                 keyPassphrase = current.keyPassphrase,
                 transport = current.transport,
                 authMethod = current.authMethod,
-                postConnectCommand = current.postConnectCommand.trim(),
+                postConnectCommand = current.postConnectCommand,
             )
             hostRepository.upsert(profile)
             onComplete()

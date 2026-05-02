@@ -177,7 +177,7 @@ class TerminalSessionEngine(
                 requestSnapshot(force = true)
                 startReadLoop()
                 if (params.postConnectCommand.isNotBlank()) {
-                    val cmd = params.postConnectCommand.trim() + "\n"
+                    val cmd = params.postConnectCommand + "\n"
                     writeRemote(cmd.toByteArray(Charsets.UTF_8))
                 }
             } catch (e: Exception) {
