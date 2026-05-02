@@ -109,6 +109,8 @@ private fun TerminalViewModel.dispatchTextWithModifierState(
 private fun TerminalCustomActionsFab(
     groups: List<TerminalCustomKeyGroup>,
     onActionClick: (TerminalCustomAction) -> Unit,
+    onDisconnect: (() -> Unit)? = null,
+    onSettings: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val colors = ChuColors.current
@@ -134,6 +136,30 @@ private fun TerminalCustomActionsFab(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (selectedGroup == null) {
+                    if (onSettings != null) {
+                        ChuButton(
+                            onClick = {
+                                onSettings()
+                                expanded = false
+                            },
+                            variant = ChuButtonVariant.Outlined,
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                        ) {
+                            ChuText("⚙ Settings", style = typography.label)
+                        }
+                    }
+                    if (onDisconnect != null) {
+                        ChuButton(
+                            onClick = {
+                                onDisconnect()
+                                expanded = false
+                            },
+                            variant = ChuButtonVariant.Outlined,
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                        ) {
+                            ChuText("⏻ Disconnect", style = typography.label)
+                        }
+                    }
                     groups.forEach { group ->
                         ChuButton(
                             onClick = {
@@ -598,22 +624,22 @@ fun TerminalScreen(
                             },
                         )
 
-                        if (currentTerminalCustomKeyGroups.isNotEmpty()) {
-                            TerminalCustomActionsFab(
-                                groups = currentTerminalCustomKeyGroups,
-                                onActionClick = { action ->
-                                    val decoded = decodeCustomActionValue(action.payload)
-                                    val rawText = decoded.text + if (CustomActionModifier.Enter in decoded.modifiers) "\n" else ""
-                                    val actionModifierState = modifierStateForCustomAction(decoded.modifiers)
-                                    vm.dispatchTextWithModifierState(rawText, actionModifierState)
-                                    resetModifiers()
-                                    requestInputFocus()
-                                },
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(end = 14.dp, bottom = 12.dp),
-                            )
-                        }
+                        TerminalCustomActionsFab(
+                            groups = currentTerminalCustomKeyGroups,
+                            onActionClick = { action ->
+                                val decoded = decodeCustomActionValue(action.payload)
+                                val rawText = decoded.text + if (CustomActionModifier.Enter in decoded.modifiers) "\n" else ""
+                                val actionModifierState = modifierStateForCustomAction(decoded.modifiers)
+                                vm.dispatchTextWithModifierState(rawText, actionModifierState)
+                                resetModifiers()
+                                requestInputFocus()
+                            },
+                            onDisconnect = { vm.disconnect() },
+                            onSettings = { showSettings = true },
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(end = 14.dp, bottom = 12.dp),
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -621,7 +647,6 @@ fun TerminalScreen(
                         items = accessoryLayout,
                         modifierState = modifierState,
                         onAction = ::dispatchAccessoryAction,
-                        onSettings = { showSettings = true },
                         maxRows = currentAccessoryRowCount,
                         modifier = Modifier.padding(bottom = 2.dp),
                     )

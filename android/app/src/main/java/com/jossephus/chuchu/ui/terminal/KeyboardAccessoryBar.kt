@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +25,6 @@ fun KeyboardAccessoryBar(
     items: List<AccessoryKeyItem>,
     modifierState: ModifierState,
     onAction: (AccessoryAction) -> Unit,
-    onSettings: (() -> Unit)? = null,
     maxRows: Int = 1,
     modifier: Modifier = Modifier,
 ) {
@@ -37,71 +35,52 @@ fun KeyboardAccessoryBar(
     // Split items into rows of ITEMS_PER_ROW, up to maxRows
     val rows = items.chunked(ITEMS_PER_ROW).take(maxRows)
 
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(start = 4.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        // Main key rows — fill available space
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            rows.forEach { rowItems ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    rowItems.forEach { item ->
-                        val toggleModifier = (item.action as? AccessoryAction.ToggleModifier)?.modifier
-                        if (toggleModifier != null) {
-                            ToggleButton(
-                                label = item.label,
-                                enabled = modifierState.isEnabled(toggleModifier),
-                                onClick = { onAction(item.action) },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(buttonHeight),
-                                contentPadding = buttonPadding,
-                            )
-                        } else {
-                            ChuButton(
-                                onClick = { onAction(item.action) },
-                                variant = ChuButtonVariant.Outlined,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(buttonHeight),
-                                contentPadding = buttonPadding,
-                            ) {
-                                ChuText(item.label, style = typography.labelSmall)
-                            }
-                        }
-                    }
-
-                    // Fill remaining slots with spacers so all rows have equal column count
-                    repeat(ITEMS_PER_ROW - rowItems.size) {
-                        Spacer(
+        rows.forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                rowItems.forEach { item ->
+                    val toggleModifier = (item.action as? AccessoryAction.ToggleModifier)?.modifier
+                    if (toggleModifier != null) {
+                        ToggleButton(
+                            label = item.label,
+                            enabled = modifierState.isEnabled(toggleModifier),
+                            onClick = { onAction(item.action) },
                             modifier = Modifier
                                 .weight(1f)
                                 .height(buttonHeight),
+                            contentPadding = buttonPadding,
                         )
+                    } else {
+                        ChuButton(
+                            onClick = { onAction(item.action) },
+                            variant = ChuButtonVariant.Outlined,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(buttonHeight),
+                            contentPadding = buttonPadding,
+                        ) {
+                            ChuText(item.label, style = typography.labelSmall)
+                        }
                     }
                 }
-            }
-        }
 
-        // Settings gear — always on the right, outside the weight rows
-        if (onSettings != null) {
-            Spacer(modifier = Modifier.width(4.dp))
-            ChuButton(
-                onClick = onSettings,
-                variant = ChuButtonVariant.Outlined,
-                modifier = Modifier.height(buttonHeight),
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 3.dp),
-            ) {
-                ChuText("⚙", style = typography.labelSmall)
+                // Fill remaining slots with spacers so all rows have equal column count
+                repeat(ITEMS_PER_ROW - rowItems.size) {
+                    Spacer(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(buttonHeight),
+                    )
+                }
             }
         }
     }
