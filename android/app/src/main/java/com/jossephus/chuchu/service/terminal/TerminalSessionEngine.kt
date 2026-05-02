@@ -64,6 +64,7 @@ class TerminalSessionEngine(
         val privateKeyPem: String,
         val keyPassphrase: String,
         val transport: Transport,
+        val postConnectCommand: String = "",
     )
 
     private val dispatcher = Executors.newSingleThreadExecutor { r ->
@@ -124,6 +125,7 @@ class TerminalSessionEngine(
         keyPassphrase: String,
         transport: Transport,
         sessionKey: String,
+        postConnectCommand: String = "",
     ) {
         disconnectRequested = false
         val params = ConnectionParams(
@@ -136,6 +138,7 @@ class TerminalSessionEngine(
             privateKeyPem = privateKeyPem,
             keyPassphrase = keyPassphrase,
             transport = transport,
+            postConnectCommand = postConnectCommand,
         )
         lastConnectionParams = params
         scope.launch(dispatcher) {
@@ -173,6 +176,10 @@ class TerminalSessionEngine(
                 )
                 requestSnapshot(force = true)
                 startReadLoop()
+                if (params.postConnectCommand.isNotBlank()) {
+                    val cmd = params.postConnectCommand.trim() + "\n"
+                    writeRemote(cmd.toByteArray(Charsets.UTF_8))
+                }
             } catch (e: Exception) {
                 Log.e("TerminalSession", "Connect failed", e)
                 _state.value = SessionState(

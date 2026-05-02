@@ -75,6 +75,7 @@ class AddServerViewModel(
                     keyPassphrase = profile.keyPassphrase,
                     transport = profile.transport,
                     authMethod = profile.authMethod,
+                    postConnectCommand = profile.postConnectCommand,
                 )
             }
         }
@@ -102,6 +103,10 @@ class AddServerViewModel(
 
     fun updateKeyPassphrase(passphrase: String) {
         _form.value = _form.value.copy(keyPassphrase = passphrase)
+    }
+
+    fun updatePostConnectCommand(command: String) {
+        _form.value = _form.value.copy(postConnectCommand = command)
     }
 
     fun selectStoredKey(keyId: Long?) {
@@ -238,6 +243,7 @@ class AddServerViewModel(
                 keyPassphrase = current.keyPassphrase,
                 transport = current.transport,
                 authMethod = current.authMethod,
+                postConnectCommand = current.postConnectCommand.trim(),
             )
             hostRepository.upsert(profile)
             onComplete()
@@ -258,6 +264,7 @@ data class AddServerForm(
     val keyPassphrase: String = "",
     val transport: Transport = Transport.SSH,
     val authMethod: AuthMethod = AuthMethod.Password,
+    val postConnectCommand: String = "",
 )
 
 fun AddServerForm.canSave(): Boolean {

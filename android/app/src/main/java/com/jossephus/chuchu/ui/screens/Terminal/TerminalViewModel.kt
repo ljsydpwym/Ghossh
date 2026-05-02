@@ -87,6 +87,10 @@ class TerminalViewModel(
         _connectForm.value = _connectForm.value.copy(keyPassphrase = keyPassphrase)
     }
 
+    fun updatePostConnectCommand(command: String) {
+        _connectForm.value = _connectForm.value.copy(postConnectCommand = command)
+    }
+
     fun refreshTailscaleStatus() {
         _tailscaleActive.value = tailscaleStatusChecker.isActive()
     }
@@ -107,6 +111,7 @@ class TerminalViewModel(
             keyPassphrase = form.keyPassphrase,
             transport = form.transport,
             sessionKey = sessionKey,
+            postConnectCommand = form.postConnectCommand,
         )
     }
 
@@ -241,4 +246,5 @@ data class ConnectForm(
     val publicKeyOpenSsh: String = "",
     val keyPassphrase: String = "",
     val transport: Transport = Transport.SSH,
+    val postConnectCommand: String = "",
 )

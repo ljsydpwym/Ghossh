@@ -12,6 +12,8 @@ import androidx.core.app.NotificationCompat
 import com.jossephus.ghossh.R
 
 class SessionForegroundService : Service() {
+    private var currentHost: String? = null
+
     override fun onCreate() {
         super.onCreate()
         ensureNotificationChannel()
@@ -26,6 +28,7 @@ class SessionForegroundService : Service() {
             }
 
             else -> {
+                currentHost = intent?.getStringExtra(EXTRA_HOST)
                 startForeground(NOTIFICATION_ID, buildNotification())
                 return START_STICKY
             }
@@ -49,10 +52,13 @@ class SessionForegroundService : Service() {
     }
 
     private fun buildNotification(): Notification {
+        val text = currentHost?.let {
+            "Connected to $it"
+        } ?: "SSH session active"
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Chuchu session active")
-            .setContentText("Keeping SSH session alive in background")
+            .setContentTitle("ghossh")
+            .setContentText(text)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .build()
@@ -63,9 +69,14 @@ class SessionForegroundService : Service() {
         private const val NOTIFICATION_ID = 2002
         private const val ACTION_START = "com.jossephus.chuchu.action.START_SESSION_SERVICE"
         private const val ACTION_STOP = "com.jossephus.chuchu.action.STOP_SESSION_SERVICE"
+        private const val EXTRA_HOST = "host"
 
-        fun start(context: Context) {
-            val intent = Intent(context, SessionForegroundService::class.java).setAction(ACTION_START)
+        fun start(context: Context, host: String? = null) {
+            val intent = Intent(context, SessionForegroundService::class.java)
+                .setAction(ACTION_START)
+            if (host != null) {
+                intent.putExtra(EXTRA_HOST, host)
+            }
             runCatching {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(intent)

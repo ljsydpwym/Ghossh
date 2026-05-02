@@ -19,4 +19,6 @@ data class HostProfile(
     val keyPassphrase: String = "",
     val transport: Transport = Transport.SSH,
     val authMethod: AuthMethod = AuthMethod.Password,
+    @androidx.room.ColumnInfo(defaultValue = "")
+    val postConnectCommand: String = "",
 )

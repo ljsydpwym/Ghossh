@@ -248,6 +248,24 @@ fun AddServerScreen(
 
         SectionDivider()
 
+        // --- Post-connect command ---
+        SectionHeader("Post-connect")
+        ChuTextField(
+            value = form.postConnectCommand,
+            onValueChange = vm::updatePostConnectCommand,
+            label = "Command to run after connect",
+            placeholder = "tmux -a chuchu",
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        ChuText(
+            "Runs this command right after SSH connects. Useful for attaching to tmux, setting up aliases, etc.",
+            style = typography.bodySmall,
+            color = colors.textMuted,
+        )
+
+        SectionDivider()
+
         // --- Actions ---
         val canTest = form.host.isNotBlank() && form.username.isNotBlank()
         ChuButton(

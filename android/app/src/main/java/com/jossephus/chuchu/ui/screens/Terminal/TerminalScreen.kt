@@ -249,6 +249,7 @@ fun TerminalScreen(
         vm.updatePassword(host.password)
         vm.updateTransport(host.transport)
         vm.updateAuthMethod(host.authMethod)
+        vm.updatePostConnectCommand(host.postConnectCommand)
         if (key != null) {
             vm.updatePrivateKey(key.privateKeyPem, key.publicKeyOpenSsh)
         }

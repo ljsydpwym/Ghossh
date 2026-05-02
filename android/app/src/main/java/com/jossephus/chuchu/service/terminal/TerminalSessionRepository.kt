@@ -44,14 +44,17 @@ class TerminalSessionRepository private constructor(
     val hostKeyPrompt: StateFlow<HostKeyPrompt?> = engine.hostKeyPrompt
 
     init {
+        // Keep the foreground service running whenever the SSH session is active.
+        // This prevents Android from killing the process when the app is backgrounded.
         scope.launch {
             engine.state.collectLatest { state ->
-                val shouldRunInBackground = attachedClients == 0 && (
-                    state.status == SessionStatus.Connecting ||
-                        state.status == SessionStatus.Connected
-                    )
-                if (shouldRunInBackground) {
-                    SessionForegroundService.start(appContext)
+                if (state.status == SessionStatus.Connecting ||
+                    state.status == SessionStatus.Connected
+                ) {
+                    val hostLabel = activeConnectionSpec?.let {
+                        "${it.username}@${it.host}:${it.port}"
+                    }
+                    SessionForegroundService.start(appContext, hostLabel)
                 } else {
                     SessionForegroundService.stop(appContext)
                 }
@@ -61,21 +64,10 @@ class TerminalSessionRepository private constructor(
 
     fun attachClient() {
         attachedClients += 1
-        if (attachedClients == 1) {
-            SessionForegroundService.stop(appContext)
-        }
     }
 
     fun detachClient() {
         attachedClients = (attachedClients - 1).coerceAtLeast(0)
-        val state = sessionState.value
-        val shouldRunInBackground = attachedClients == 0 && (
-            state.status == SessionStatus.Connecting ||
-                state.status == SessionStatus.Connected
-            )
-        if (shouldRunInBackground) {
-            SessionForegroundService.start(appContext)
-        }
     }
 
     fun connect(
@@ -89,6 +81,7 @@ class TerminalSessionRepository private constructor(
         keyPassphrase: String,
         transport: Transport,
         sessionKey: String,
+        postConnectCommand: String = "",
     ) {
         val requestedSpec = ConnectionSpec(
             host = host,
@@ -114,6 +107,7 @@ class TerminalSessionRepository private constructor(
             keyPassphrase = keyPassphrase,
             transport = transport,
             sessionKey = sessionKey,
+            postConnectCommand = postConnectCommand,
         )
     }
 
