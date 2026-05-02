@@ -20,6 +20,9 @@ class SettingsRepository(context: Context) {
     private val _accessoryLayoutIds = MutableStateFlow(loadAccessoryLayoutIds())
     val accessoryLayoutIds: StateFlow<List<String>> = _accessoryLayoutIds.asStateFlow()
 
+    private val _accessoryRowCount = MutableStateFlow(loadAccessoryRowCount())
+    val accessoryRowCount: StateFlow<Int> = _accessoryRowCount.asStateFlow()
+
     private val _terminalCustomKeyGroups = MutableStateFlow(loadTerminalCustomKeyGroups())
     val terminalCustomKeyGroups: StateFlow<List<TerminalCustomKeyGroup>> = _terminalCustomKeyGroups.asStateFlow()
 
@@ -32,6 +35,12 @@ class SettingsRepository(context: Context) {
         val normalized = TerminalAccessoryLayoutStore.normalizeIds(ids)
         prefs.edit().putString(KEY_ACCESSORY_LAYOUT, normalized.joinToString(separator = ",")).apply()
         _accessoryLayoutIds.value = normalized
+    }
+
+    fun setAccessoryRowCount(count: Int) {
+        val clamped = count.coerceIn(1, 2)
+        prefs.edit().putInt(KEY_ACCESSORY_ROW_COUNT, clamped).apply()
+        _accessoryRowCount.value = clamped
     }
 
     fun setTerminalCustomKeyGroups(groups: List<TerminalCustomKeyGroup>) {
@@ -52,6 +61,10 @@ class SettingsRepository(context: Context) {
         )
     }
 
+    private fun loadAccessoryRowCount(): Int {
+        return prefs.getInt(KEY_ACCESSORY_ROW_COUNT, DEFAULT_ROW_COUNT).coerceIn(1, 2)
+    }
+
     private fun loadTerminalCustomKeyGroups(): List<TerminalCustomKeyGroup> {
         val stored = prefs.getString(KEY_TERMINAL_CUSTOM_ACTIONS, null)
         return TerminalCustomActionStore.parse(stored)
@@ -60,8 +73,10 @@ class SettingsRepository(context: Context) {
     companion object {
         private const val KEY_THEME = "theme_name"
         private const val KEY_ACCESSORY_LAYOUT = "terminal_accessory_layout"
+        private const val KEY_ACCESSORY_ROW_COUNT = "terminal_accessory_row_count"
         private const val KEY_TERMINAL_CUSTOM_ACTIONS = "terminal_custom_actions"
-        const val DEFAULT_THEME = "Catppuccin Mocha"
+        private const val DEFAULT_THEME = "Catppuccin Mocha"
+        private const val DEFAULT_ROW_COUNT = 1
 
         @Volatile
         private var instance: SettingsRepository? = null

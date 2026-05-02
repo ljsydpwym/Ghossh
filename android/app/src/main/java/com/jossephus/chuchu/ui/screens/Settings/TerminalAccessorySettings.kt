@@ -7,8 +7,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,25 +17,19 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.jossephus.chuchu.ui.components.ChuButton
 import com.jossephus.chuchu.ui.components.ChuButtonVariant
@@ -54,7 +46,9 @@ import kotlin.math.roundToInt
 @Composable
 internal fun TerminalSettings(
     currentAccessoryLayoutIds: List<String>,
+    currentAccessoryRowCount: Int,
     onEditAccessoryLayout: () -> Unit,
+    onAccessoryRowCountChanged: (Int) -> Unit,
     currentTerminalCustomKeyGroups: List<TerminalCustomKeyGroup>,
     onEditCustomActions: () -> Unit,
 ) {
@@ -67,6 +61,7 @@ internal fun TerminalSettings(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         ChuText("Terminal", style = typography.title)
 
+        // Accessory keys section
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -98,6 +93,31 @@ internal fun TerminalSettings(
                 }
             }
 
+            // Row count toggle
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ChuText("Rows", style = typography.body)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(1, 2).forEach { count ->
+                        val isSelected = count == currentAccessoryRowCount
+                        ChuButton(
+                            onClick = { onAccessoryRowCountChanged(count) },
+                            variant = if (isSelected) ChuButtonVariant.Filled else ChuButtonVariant.Outlined,
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                        ) {
+                            ChuText(
+                                "$count",
+                                style = typography.label,
+                                color = if (isSelected) colors.onAccent else colors.textSecondary,
+                            )
+                        }
+                    }
+                }
+            }
+
             if (selectedItems.isEmpty()) {
                 ChuText(
                     "Choose the accessory keys you want in the terminal bar.",
@@ -115,12 +135,14 @@ internal fun TerminalSettings(
                         items = selectedItems,
                         modifierState = ModifierState(),
                         onAction = {},
+                        maxRows = currentAccessoryRowCount,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
         }
 
+        // Custom actions section
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -166,20 +188,16 @@ internal fun TerminalSettings(
 internal fun AccessoryLayoutEditorSheet(
     visible: Boolean,
     selectedIds: List<String>,
+    maxRows: Int,
     onSave: (List<String>) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val colors = ChuColors.current
     val typography = ChuTypography.current
-    val density = LocalDensity.current
-    val reorderStepPx = with(density) { 40.dp.toPx() }
     val allItems = remember { TerminalAccessoryLayoutStore.catalog() }
     var draftSelectedIds by remember(selectedIds) {
         mutableStateOf(TerminalAccessoryLayoutStore.normalizeIds(selectedIds))
     }
-    var previewDraggingId by remember { mutableStateOf<String?>(null) }
-    var previewDragRemainderPx by remember { mutableFloatStateOf(0f) }
-    var previewDragOffsetPx by remember { mutableFloatStateOf(0f) }
 
     val selectedItems = remember(draftSelectedIds) {
         TerminalAccessoryLayoutStore.resolveSelectedLayout(draftSelectedIds)
@@ -191,18 +209,6 @@ internal fun AccessoryLayoutEditorSheet(
         } else {
             draftSelectedIds + item.id
         }
-    }
-
-    fun moveSelectedItem(itemId: String, direction: Int): Boolean {
-        val index = draftSelectedIds.indexOf(itemId)
-        if (index < 0) return false
-        val target = (index + direction).coerceIn(0, draftSelectedIds.lastIndex)
-        if (target == index) return false
-        val updated = draftSelectedIds.toMutableList()
-        updated.removeAt(index)
-        updated.add(target, itemId)
-        draftSelectedIds = updated
-        return true
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -303,68 +309,12 @@ internal fun AccessoryLayoutEditorSheet(
                             color = colors.textMuted,
                         )
                     } else {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            selectedItems.forEach { item ->
-                                key(item.id) {
-                                    val isDragging = previewDraggingId == item.id
-                                    PreviewKeyChip(
-                                        item = item,
-                                        dragging = isDragging,
-                                        modifier = Modifier.pointerInput(item.id) {
-                                            detectDragGesturesAfterLongPress(
-                                                onDragStart = {
-                                                    previewDraggingId = item.id
-                                                    previewDragRemainderPx = 0f
-                                                    previewDragOffsetPx = 0f
-                                                },
-                                                onDragEnd = {
-                                                    previewDraggingId = null
-                                                    previewDragRemainderPx = 0f
-                                                    previewDragOffsetPx = 0f
-                                                },
-                                                onDragCancel = {
-                                                    previewDraggingId = null
-                                                    previewDragRemainderPx = 0f
-                                                    previewDragOffsetPx = 0f
-                                                },
-                                                onDrag = { change, dragAmount ->
-                                                    change.consume()
-                                                    previewDragRemainderPx += dragAmount.x
-                                                    previewDragOffsetPx += dragAmount.x
-                                                    if (previewDragRemainderPx >= reorderStepPx) {
-                                                        val stepCount = (previewDragRemainderPx / reorderStepPx).toInt()
-                                                        repeat(stepCount) {
-                                                            if (!moveSelectedItem(item.id, 1)) return@repeat
-                                                            previewDragRemainderPx -= reorderStepPx
-                                                            previewDragOffsetPx -= reorderStepPx
-                                                        }
-                                                    } else if (previewDragRemainderPx <= -reorderStepPx) {
-                                                        val stepCount = (-previewDragRemainderPx / reorderStepPx).toInt()
-                                                        repeat(stepCount) {
-                                                            if (!moveSelectedItem(item.id, -1)) return@repeat
-                                                            previewDragRemainderPx += reorderStepPx
-                                                            previewDragOffsetPx += reorderStepPx
-                                                        }
-                                                    }
-                                                },
-                                            )
-                                        },
-                                        dragOffsetPx = if (isDragging) previewDragOffsetPx else 0f,
-                                    )
-                                }
-                            }
-                        }
-
-                        ChuText(
-                            "Long-press a key in preview, then drag to place it where you want.",
-                            style = typography.body,
-                            color = colors.textMuted,
+                        KeyboardAccessoryBar(
+                            items = selectedItems,
+                            modifierState = ModifierState(),
+                            onAction = {},
+                            maxRows = maxRows,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
@@ -391,6 +341,14 @@ internal fun AccessoryLayoutEditorSheet(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     ChuButton(
+                        onClick = { draftSelectedIds = emptyList() },
+                        variant = ChuButtonVariant.Outlined,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        ChuText("Clear all", style = typography.label)
+                    }
+
+                    ChuButton(
                         onClick = { draftSelectedIds = TerminalAccessoryLayoutStore.defaultLayoutIds() },
                         variant = ChuButtonVariant.Outlined,
                         modifier = Modifier.weight(1f),
@@ -407,32 +365,6 @@ internal fun AccessoryLayoutEditorSheet(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun PreviewKeyChip(
-    item: AccessoryKeyItem,
-    dragging: Boolean,
-    dragOffsetPx: Float,
-    modifier: Modifier = Modifier,
-) {
-    val colors = ChuColors.current
-    val typography = ChuTypography.current
-
-    Box(
-        modifier = modifier
-            .offset { IntOffset(x = dragOffsetPx.roundToInt(), y = 0) }
-            .clip(RoundedCornerShape(6.dp))
-            .background(if (dragging) colors.accent.copy(alpha = 0.2f) else colors.surfaceVariant)
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        ChuText(
-            text = item.label,
-            style = typography.label,
-            color = if (dragging) colors.accent else colors.textPrimary,
-        )
     }
 }
 

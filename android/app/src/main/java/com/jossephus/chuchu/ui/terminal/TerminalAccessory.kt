@@ -176,6 +176,8 @@ object TerminalAccessoryLayoutStore {
         AccessoryKeyItem("f11", TerminalSpecialKey.F11.label, AccessoryAction.SendSpecialKey(TerminalSpecialKey.F11)),
         AccessoryKeyItem("f12", TerminalSpecialKey.F12.label, AccessoryAction.SendSpecialKey(TerminalSpecialKey.F12)),
         AccessoryKeyItem("paste", "Paste", AccessoryAction.Paste),
+        AccessoryKeyItem("slash", "/", AccessoryAction.SendText("/")),
+        AccessoryKeyItem("minus", "-", AccessoryAction.SendText("-")),
     )
 
     private val catalogById: Map<String, AccessoryKeyItem> = catalogItems.associateBy { it.id }

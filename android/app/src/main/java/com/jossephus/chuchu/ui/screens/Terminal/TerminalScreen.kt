@@ -219,6 +219,7 @@ fun TerminalScreen(
     val settingsRepo = remember(context) { SettingsRepository.getInstance(context) }
     val currentTheme by settingsRepo.themeName.collectAsStateWithLifecycle()
     val currentAccessoryLayoutIds by settingsRepo.accessoryLayoutIds.collectAsStateWithLifecycle()
+    val currentAccessoryRowCount by settingsRepo.accessoryRowCount.collectAsStateWithLifecycle()
     val currentTerminalCustomKeyGroups by settingsRepo.terminalCustomKeyGroups.collectAsStateWithLifecycle()
     val accessoryLayout = remember(currentAccessoryLayoutIds) {
         TerminalAccessoryLayoutStore.resolveSelectedLayout(currentAccessoryLayoutIds)
@@ -620,6 +621,7 @@ fun TerminalScreen(
                         modifierState = modifierState,
                         onAction = ::dispatchAccessoryAction,
                         onSettings = { showSettings = true },
+                        maxRows = currentAccessoryRowCount,
                         modifier = Modifier.padding(bottom = 2.dp),
                     )
                 }
@@ -629,9 +631,11 @@ fun TerminalScreen(
                         visible = true,
                         currentTheme = currentTheme,
                         currentAccessoryLayoutIds = currentAccessoryLayoutIds,
+                        currentAccessoryRowCount = currentAccessoryRowCount,
                         currentTerminalCustomKeyGroups = currentTerminalCustomKeyGroups,
                         onThemeSelected = { settingsRepo.setTheme(it) },
                         onAccessoryLayoutChanged = { settingsRepo.setAccessoryLayoutIds(it) },
+                        onAccessoryRowCountChanged = { settingsRepo.setAccessoryRowCount(it) },
                         onTerminalCustomActionsChanged = { settingsRepo.setTerminalCustomKeyGroups(it) },
                         onDismiss = { showSettings = false },
                     )
