@@ -23,6 +23,9 @@ class SettingsRepository(context: Context) {
     private val _accessoryRowCount = MutableStateFlow(loadAccessoryRowCount())
     val accessoryRowCount: StateFlow<Int> = _accessoryRowCount.asStateFlow()
 
+    private val _accessoryItemsPerRow = MutableStateFlow(loadAccessoryItemsPerRow())
+    val accessoryItemsPerRow: StateFlow<Int> = _accessoryItemsPerRow.asStateFlow()
+
     private val _terminalCustomKeyGroups = MutableStateFlow(loadTerminalCustomKeyGroups())
     val terminalCustomKeyGroups: StateFlow<List<TerminalCustomKeyGroup>> = _terminalCustomKeyGroups.asStateFlow()
 
@@ -41,6 +44,12 @@ class SettingsRepository(context: Context) {
         val clamped = count.coerceIn(1, 2)
         prefs.edit().putInt(KEY_ACCESSORY_ROW_COUNT, clamped).apply()
         _accessoryRowCount.value = clamped
+    }
+
+    fun setAccessoryItemsPerRow(count: Int) {
+        val clamped = count.coerceIn(3, 12)
+        prefs.edit().putInt(KEY_ACCESSORY_ITEMS_PER_ROW, clamped).apply()
+        _accessoryItemsPerRow.value = clamped
     }
 
     fun setTerminalCustomKeyGroups(groups: List<TerminalCustomKeyGroup>) {
@@ -65,6 +74,10 @@ class SettingsRepository(context: Context) {
         return prefs.getInt(KEY_ACCESSORY_ROW_COUNT, DEFAULT_ROW_COUNT).coerceIn(1, 2)
     }
 
+    private fun loadAccessoryItemsPerRow(): Int {
+        return prefs.getInt(KEY_ACCESSORY_ITEMS_PER_ROW, DEFAULT_ITEMS_PER_ROW).coerceIn(3, 12)
+    }
+
     private fun loadTerminalCustomKeyGroups(): List<TerminalCustomKeyGroup> {
         val stored = prefs.getString(KEY_TERMINAL_CUSTOM_ACTIONS, null)
         return TerminalCustomActionStore.parse(stored)
@@ -74,9 +87,11 @@ class SettingsRepository(context: Context) {
         private const val KEY_THEME = "theme_name"
         private const val KEY_ACCESSORY_LAYOUT = "terminal_accessory_layout"
         private const val KEY_ACCESSORY_ROW_COUNT = "terminal_accessory_row_count"
+        private const val KEY_ACCESSORY_ITEMS_PER_ROW = "terminal_accessory_items_per_row"
         private const val KEY_TERMINAL_CUSTOM_ACTIONS = "terminal_custom_actions"
         private const val DEFAULT_THEME = "Catppuccin Mocha"
         private const val DEFAULT_ROW_COUNT = 1
+        private const val DEFAULT_ITEMS_PER_ROW = 7
 
         @Volatile
         private var instance: SettingsRepository? = null

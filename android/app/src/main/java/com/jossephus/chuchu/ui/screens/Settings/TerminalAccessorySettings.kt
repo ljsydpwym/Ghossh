@@ -47,8 +47,10 @@ import kotlin.math.roundToInt
 internal fun TerminalSettings(
     currentAccessoryLayoutIds: List<String>,
     currentAccessoryRowCount: Int,
+    currentAccessoryItemsPerRow: Int,
     onEditAccessoryLayout: () -> Unit,
     onAccessoryRowCountChanged: (Int) -> Unit,
+    onAccessoryItemsPerRowChanged: (Int) -> Unit,
     currentTerminalCustomKeyGroups: List<TerminalCustomKeyGroup>,
     onEditCustomActions: () -> Unit,
 ) {
@@ -90,6 +92,31 @@ internal fun TerminalSettings(
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
                 ) {
                     ChuText("Customize", style = typography.label)
+                }
+            }
+
+            // Items per row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ChuText("Items per row", style = typography.body)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(5, 6, 7, 8, 9, 10).forEach { count ->
+                        val isSelected = count == currentAccessoryItemsPerRow
+                        ChuButton(
+                            onClick = { onAccessoryItemsPerRowChanged(count) },
+                            variant = if (isSelected) ChuButtonVariant.Filled else ChuButtonVariant.Outlined,
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                        ) {
+                            ChuText(
+                                "$count",
+                                style = typography.label,
+                                color = if (isSelected) colors.onAccent else colors.textSecondary,
+                            )
+                        }
+                    }
                 }
             }
 
@@ -136,6 +163,7 @@ internal fun TerminalSettings(
                         modifierState = ModifierState(),
                         onAction = {},
                         maxRows = currentAccessoryRowCount,
+                        itemsPerRow = currentAccessoryItemsPerRow,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -189,6 +217,7 @@ internal fun AccessoryLayoutEditorSheet(
     visible: Boolean,
     selectedIds: List<String>,
     maxRows: Int,
+    itemsPerRow: Int,
     onSave: (List<String>) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -314,6 +343,7 @@ internal fun AccessoryLayoutEditorSheet(
                             modifierState = ModifierState(),
                             onAction = {},
                             maxRows = maxRows,
+                            itemsPerRow = itemsPerRow,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }

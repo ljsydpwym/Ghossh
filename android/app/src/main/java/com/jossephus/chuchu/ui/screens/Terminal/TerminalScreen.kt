@@ -246,6 +246,7 @@ fun TerminalScreen(
     val currentTheme by settingsRepo.themeName.collectAsStateWithLifecycle()
     val currentAccessoryLayoutIds by settingsRepo.accessoryLayoutIds.collectAsStateWithLifecycle()
     val currentAccessoryRowCount by settingsRepo.accessoryRowCount.collectAsStateWithLifecycle()
+    val currentAccessoryItemsPerRow by settingsRepo.accessoryItemsPerRow.collectAsStateWithLifecycle()
     val currentTerminalCustomKeyGroups by settingsRepo.terminalCustomKeyGroups.collectAsStateWithLifecycle()
     val accessoryLayout = remember(currentAccessoryLayoutIds) {
         TerminalAccessoryLayoutStore.resolveSelectedLayout(currentAccessoryLayoutIds)
@@ -651,6 +652,7 @@ fun TerminalScreen(
                         modifierState = modifierState,
                         onAction = ::dispatchAccessoryAction,
                         maxRows = currentAccessoryRowCount,
+                        itemsPerRow = currentAccessoryItemsPerRow,
                         modifier = Modifier.padding(bottom = 2.dp),
                     )
                 }
@@ -661,10 +663,12 @@ fun TerminalScreen(
                         currentTheme = currentTheme,
                         currentAccessoryLayoutIds = currentAccessoryLayoutIds,
                         currentAccessoryRowCount = currentAccessoryRowCount,
+                        currentAccessoryItemsPerRow = currentAccessoryItemsPerRow,
                         currentTerminalCustomKeyGroups = currentTerminalCustomKeyGroups,
                         onThemeSelected = { settingsRepo.setTheme(it) },
                         onAccessoryLayoutChanged = { settingsRepo.setAccessoryLayoutIds(it) },
                         onAccessoryRowCountChanged = { settingsRepo.setAccessoryRowCount(it) },
+                        onAccessoryItemsPerRowChanged = { settingsRepo.setAccessoryItemsPerRow(it) },
                         onTerminalCustomActionsChanged = { settingsRepo.setTerminalCustomKeyGroups(it) },
                         onDismiss = { showSettings = false },
                     )

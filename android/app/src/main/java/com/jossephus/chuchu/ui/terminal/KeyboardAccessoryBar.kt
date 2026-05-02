@@ -18,22 +18,21 @@ import com.jossephus.chuchu.ui.components.ChuText
 import com.jossephus.chuchu.ui.theme.ChuColors
 import com.jossephus.chuchu.ui.theme.ChuTypography
 
-private const val ITEMS_PER_ROW = 6
-
 @Composable
 fun KeyboardAccessoryBar(
     items: List<AccessoryKeyItem>,
     modifierState: ModifierState,
     onAction: (AccessoryAction) -> Unit,
     maxRows: Int = 1,
+    itemsPerRow: Int = 7,
     modifier: Modifier = Modifier,
 ) {
     val buttonHeight = 30.dp
     val buttonPadding = PaddingValues(start = 2.dp, end = 2.dp, top = 3.dp, bottom = 3.dp)
     val typography = ChuTypography.current
 
-    // Split items into rows of ITEMS_PER_ROW, up to maxRows
-    val rows = items.chunked(ITEMS_PER_ROW).take(maxRows)
+    // Split items into rows of itemsPerRow, up to maxRows
+    val rows = items.chunked(itemsPerRow).take(maxRows)
 
     Column(
         modifier = modifier
@@ -74,7 +73,7 @@ fun KeyboardAccessoryBar(
                 }
 
                 // Fill remaining slots with spacers so all rows have equal column count
-                repeat(ITEMS_PER_ROW - rowItems.size) {
+                repeat(itemsPerRow - rowItems.size) {
                     Spacer(
                         modifier = Modifier
                             .weight(1f)

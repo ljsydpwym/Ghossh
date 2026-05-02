@@ -55,10 +55,12 @@ fun SettingsSheet(
     currentTheme: String,
     currentAccessoryLayoutIds: List<String>,
     currentAccessoryRowCount: Int,
+    currentAccessoryItemsPerRow: Int,
     currentTerminalCustomKeyGroups: List<TerminalCustomKeyGroup>,
     onThemeSelected: (String) -> Unit,
     onAccessoryLayoutChanged: (List<String>) -> Unit,
     onAccessoryRowCountChanged: (Int) -> Unit,
+    onAccessoryItemsPerRowChanged: (Int) -> Unit,
     onTerminalCustomActionsChanged: (List<TerminalCustomKeyGroup>) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -148,8 +150,10 @@ fun SettingsSheet(
                         SettingsCategory.Terminal -> TerminalSettings(
                             currentAccessoryLayoutIds = currentAccessoryLayoutIds,
                             currentAccessoryRowCount = currentAccessoryRowCount,
+                            currentAccessoryItemsPerRow = currentAccessoryItemsPerRow,
                             onEditAccessoryLayout = { showAccessoryEditor = true },
                             onAccessoryRowCountChanged = onAccessoryRowCountChanged,
+                            onAccessoryItemsPerRowChanged = onAccessoryItemsPerRowChanged,
                             currentTerminalCustomKeyGroups = currentTerminalCustomKeyGroups,
                             onEditCustomActions = { showCustomActionEditor = true },
                         )
@@ -161,6 +165,7 @@ fun SettingsSheet(
                 visible = showAccessoryEditor,
                 selectedIds = currentAccessoryLayoutIds,
                 maxRows = currentAccessoryRowCount,
+                itemsPerRow = currentAccessoryItemsPerRow,
                 onSave = {
                     onAccessoryLayoutChanged(it)
                     showAccessoryEditor = false
