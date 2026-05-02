@@ -362,13 +362,16 @@ fun TerminalScreen(
                 if (sessionState.error != null) {
                     ChuText(sessionState.error!!, color = colors.error, style = typography.body)
                     Spacer(modifier = Modifier.height(16.dp))
-                    ChuButton(
-                        onClick = vm::connect,
-                        modifier = Modifier.fillMaxWidth(),
-                        variant = ChuButtonVariant.Filled,
-                    ) {
-                        ChuText("Retry", style = typography.label, color = colors.onAccent)
-                    }
+                } else {
+                    ChuText("Disconnected", color = colors.textMuted, style = typography.body)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                ChuButton(
+                    onClick = vm::connect,
+                    modifier = Modifier.fillMaxWidth(),
+                    variant = ChuButtonVariant.Filled,
+                ) {
+                    ChuText("Reconnect", style = typography.label, color = colors.onAccent)
                 }
             }
         }
