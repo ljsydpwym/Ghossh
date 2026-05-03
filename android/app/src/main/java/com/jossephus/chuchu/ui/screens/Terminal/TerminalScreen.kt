@@ -162,6 +162,25 @@ private fun TerminalViewModel.dispatchTextWithModifierState(
 }
 
 @Composable
+private fun FabMenuItem(
+    text: String,
+    onClick: () -> Unit,
+) {
+    val colors = ChuColors.current
+    val typography = ChuTypography.current
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(colors.surfaceVariant)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        ChuText(text, style = typography.label, color = colors.textPrimary)
+    }
+}
+
+@Composable
 private fun TerminalCustomActionsFab(
     groups: List<TerminalCustomKeyGroup>,
     onActionClick: (TerminalCustomAction) -> Unit,
@@ -195,55 +214,44 @@ private fun TerminalCustomActionsFab(
             ) {
                 if (selectedGroup == null) {
                     if (onSettings != null) {
-                        ChuButton(
+                        FabMenuItem(
+                            text = "⚙ Settings",
                             onClick = {
                                 onSettings()
                                 expanded = false
                             },
-                            variant = ChuButtonVariant.Outlined,
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-                        ) {
-                            ChuText("⚙ Settings", style = typography.label)
-                        }
+                        )
                     }
                     if (onPickImage != null) {
-                        ChuButton(
+                        FabMenuItem(
+                            text = "\uD83D\uDCF7 Image",
                             onClick = {
                                 onPickImage()
                                 expanded = false
                             },
-                            variant = ChuButtonVariant.Outlined,
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-                        ) {
-                            ChuText("\uD83D\uDCF7 Image", style = typography.label)
-                        }
+                        )
                     }
                     if (onTakePhoto != null) {
-                        ChuButton(
+                        FabMenuItem(
+                            text = "\uD83D\uDCF8 Camera",
                             onClick = {
                                 onTakePhoto()
                                 expanded = false
                             },
-                            variant = ChuButtonVariant.Outlined,
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-                        ) {
-                            ChuText("\uD83D\uDCF8 Camera", style = typography.label)
-                        }
+                        )
                     }
                     if (onDisconnect != null) {
-                        ChuButton(
+                        FabMenuItem(
+                            text = "⏻ Disconnect",
                             onClick = {
                                 onDisconnect()
                                 expanded = false
                             },
-                            variant = ChuButtonVariant.Outlined,
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-                        ) {
-                            ChuText("⏻ Disconnect", style = typography.label)
-                        }
+                        )
                     }
                     groups.forEach { group ->
-                        ChuButton(
+                        FabMenuItem(
+                            text = group.keyLabel,
                             onClick = {
                                 if (group.actions.size == 1) {
                                     onActionClick(group.actions.first())
@@ -253,11 +261,7 @@ private fun TerminalCustomActionsFab(
                                     selectedGroupKey = group.keyLabel
                                 }
                             },
-                            variant = ChuButtonVariant.Outlined,
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                        ) {
-                            ChuText(group.keyLabel, style = typography.label)
-                        }
+                        )
                     }
                 } else {
                     selectedGroup.actions.forEach { action ->
@@ -753,7 +757,7 @@ fun TerminalScreen(
                             },
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
-                                .padding(end = 14.dp, bottom = 12.dp),
+                                .padding(end = 14.dp, bottom = 27.dp),
                         )
                     }
 
