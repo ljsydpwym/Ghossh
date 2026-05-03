@@ -520,6 +520,10 @@ class TerminalSessionEngine(
         }
     }
 
+    fun sendFile(remotePath: String, data: ByteArray) {
+        nativeSsh.writeFile(remotePath, data)
+    }
+
     private fun writeRemote(data: ByteArray) {
         nativeSsh.write(data)
     }

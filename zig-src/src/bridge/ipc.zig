@@ -6,6 +6,7 @@ pub const ProtocolVersion: u8 = 1;
 pub const Tag = enum(u8) {
     Write = 1,
     Read = 2,
+    ExecFile = 3,
     Ack = 100,
     Data = 101,
     Error = 255,

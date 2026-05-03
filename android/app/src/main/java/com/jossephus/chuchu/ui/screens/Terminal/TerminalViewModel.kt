@@ -165,6 +165,10 @@ class TerminalViewModel(
         sessionRepository.writeKey(key, codepoint, mods, action, utf8)
     }
 
+    fun sendFile(remotePath: String, data: ByteArray) {
+        sessionRepository.sendFile(remotePath, data)
+    }
+
     fun onTextInput(text: String) {
         sessionRepository.scrollToActive()
         sessionRepository.writeText(text)

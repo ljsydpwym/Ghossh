@@ -113,20 +113,13 @@ private fun transferImageToHost(
             }
             val bytes = inputStream.readBytes()
             inputStream.close()
-            val base64 = Base64.getEncoder().encodeToString(bytes)
             val timestamp = System.currentTimeMillis()
             val filename = "ghossh_" + timestamp + ".png"
+            val remotePath = "/tmp/" + filename
 
-            // Build the heredoc command to transfer the file (PTY has echo disabled)
-            val cmd = buildString {
-                append("cat > /tmp/").append(filename).append(".b64 << 'GHOSSH_EOF'").appendLine()
-                appendLine(base64)
-                appendLine("GHOSSH_EOF")
-                append("base64 -d /tmp/").append(filename).append(".b64 > /tmp/").append(filename).appendLine()
-                append("rm /tmp/").append(filename).append(".b64").appendLine()
-                append("echo 'Image saved: /tmp/").append(filename).append("'").appendLine()
-            }
-            vm.onTextInput(cmd)
+            // Transfer directly via SSH exec channel (no PTY, no echo, no base64)
+            vm.sendFile(remotePath, bytes)
+            vm.onTextInput("echo 'Image saved: " + remotePath + "'\n")
         } catch (e: Exception) {
             android.util.Log.e("TerminalScreen", "transferImageToHost failed", e)
             android.widget.Toast.makeText(context, "Failed: " + e.message, android.widget.Toast.LENGTH_SHORT).show()

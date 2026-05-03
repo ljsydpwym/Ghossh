@@ -21,6 +21,7 @@ class NativeSshService(
         private const val VERSION: Byte = 1
         private const val TAG_WRITE: Byte = 1
         private const val TAG_READ: Byte = 2
+        private const val TAG_EXEC_FILE: Byte = 3
         private const val TAG_ACK: Byte = 100.toByte()
         private const val TAG_DATA: Byte = 101.toByte()
         private const val TAG_ERROR: Byte = 255.toByte()
@@ -50,6 +51,22 @@ class NativeSshService(
         }
 
         data class DecodedFrame(val tag: Byte, val payload: ByteArray)
+
+        fun encodeExecFile(path: String, data: ByteArray): ByteArray {
+            val pathBytes = path.toByteArray(Charsets.UTF_8)
+            val payload = ByteBuffer.allocate(4 + pathBytes.size + 4 + data.size).order(ByteOrder.LITTLE_ENDIAN)
+            payload.putInt(pathBytes.size)
+            payload.put(pathBytes)
+            payload.putInt(data.size)
+            payload.put(data)
+            val frame = ByteArray(HEADER_SIZE + payload.capacity())
+            val buffer = ByteBuffer.wrap(frame).order(ByteOrder.LITTLE_ENDIAN)
+            buffer.put(VERSION)
+            buffer.put(TAG_EXEC_FILE)
+            buffer.putInt(payload.capacity())
+            buffer.put(payload.array())
+            return frame
+        }
 
         fun decode(frame: ByteArray): DecodedFrame {
             require(frame.size >= HEADER_SIZE) { "Invalid IPC response" }
@@ -191,6 +208,19 @@ class NativeSshService(
             }
             stalledWrites = 0
             offset += written
+        }
+    }
+
+    fun writeFile(path: String, data: ByteArray) {
+        if (handle == 0L) return
+        if (data.isEmpty()) return
+        val response = bridge.nativeIpcExchange(handle, Ipc.encodeExecFile(path, data))
+            ?: throw IllegalStateException(bridge.nativeGetLastError(handle) ?: "Native SSH exec file failed")
+        val decoded = Ipc.decode(response)
+        when (decoded.tag) {
+            Ipc.tagAck -> return
+            Ipc.tagError -> throw IllegalStateException(Ipc.parseError(decoded.payload))
+            else -> throw IllegalStateException("Unexpected IPC exec file response tag: ${decoded.tag}")
         }
     }
 

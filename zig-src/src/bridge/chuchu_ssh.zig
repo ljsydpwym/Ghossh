@@ -769,6 +769,96 @@ export fn Java_com_jossephus_chuchu_service_ssh_NativeSshBridge_nativeResize(env
     }
 }
 
+fn execFileWrite(session: *NativeSshSession, path: []const u8, data: []const u8) bool {
+    const ssh_session = session.session orelse {
+        setError(session, "Not connected", .{});
+        return false;
+    };
+    
+    var channel: ?*c.LIBSSH2_CHANNEL = null;
+    while (channel == null) {
+        channel = c.libssh2_channel_open_ex(
+            ssh_session, "session", 7,
+            c.LIBSSH2_CHANNEL_WINDOW_DEFAULT,
+            c.LIBSSH2_CHANNEL_PACKET_DEFAULT,
+            null, 0,
+        );
+        if (channel != null) break;
+        const rc = c.libssh2_session_last_errno(ssh_session);
+        if (rc != c.LIBSSH2_ERROR_EAGAIN) {
+            setLibssh2Error(session, "Exec channel open failed", rc);
+            return false;
+        }
+        if (!waitSocket(session, setup_wait_timeout_ms)) {
+            setError(session, "Exec channel open timed out", .{});
+            return false;
+        }
+    }
+    defer {
+        _ = c.libssh2_channel_send_eof(channel.?);
+        _ = c.libssh2_channel_wait_eof(channel.?);
+        _ = c.libssh2_channel_close(channel.?);
+        _ = c.libssh2_channel_wait_closed(channel.?);
+        _ = c.libssh2_channel_free(channel.?);
+    }
+
+    c.libssh2_channel_set_blocking(channel.?, 0);
+
+    // Build command: cat > /path
+    const cmd_prefix = "cat > ";
+    const cmd_buf = allocator.alloc(u8, cmd_prefix.len + path.len) catch {
+        setError(session, "Exec command alloc failed", .{});
+        return false;
+    };
+    defer allocator.free(cmd_buf);
+    @memcpy(cmd_buf[0..cmd_prefix.len], cmd_prefix);
+    @memcpy(cmd_buf[cmd_prefix.len..], path);
+
+    while (true) {
+        const rc = c.libssh2_channel_process_startup(
+            channel.?, "exec", 4,
+            cmd_buf.ptr, @intCast(cmd_buf.len),
+        );
+        if (rc == 0) break;
+        if (rc != c.LIBSSH2_ERROR_EAGAIN) {
+            setLibssh2Error(session, "Exec start failed", rc);
+            return false;
+        }
+        if (!waitSocket(session, setup_wait_timeout_ms)) {
+            setError(session, "Exec start timed out", .{});
+            return false;
+        }
+    }
+
+    // Write data in non-blocking loop
+    var total_written: usize = 0;
+    var stalled: u32 = 0;
+    while (total_written < data.len) {
+        const chunk = data[total_written..];
+        const rc = c.libssh2_channel_write_ex(channel.?, 0, @ptrCast(chunk.ptr), @intCast(chunk.len));
+        if (rc == c.LIBSSH2_ERROR_EAGAIN or rc == 0) {
+            stalled +%= 1;
+            if (stalled > 128) {
+                setError(session, "Exec write stalled", .{});
+                return false;
+            }
+            if (!waitSocket(session, io_wait_timeout_ms)) {
+                setError(session, "Exec write timeout", .{});
+                return false;
+            }
+            continue;
+        }
+        if (rc < 0) {
+            setLibssh2Error(session, "Exec write failed", @intCast(rc));
+            return false;
+        }
+        stalled = 0;
+        total_written += @intCast(rc);
+    }
+
+    return true;
+}
+
 export fn Java_com_jossephus_chuchu_service_ssh_NativeSshBridge_nativeIpcExchange(env: *c.JNIEnv, thiz: c.jobject, handle: c.jlong, request: c.jbyteArray) callconv(.c) c.jbyteArray {
     _ = thiz;
     const session = sessionFromHandle(handle) orelse return null;
@@ -807,6 +897,45 @@ export fn Java_com_jossephus_chuchu_service_ssh_NativeSshBridge_nativeIpcExchang
             };
             defer allocator.free(bytes);
             ipc.appendMessage(allocator, &response, .Data, bytes) catch {};
+        },
+        .ExecFile => {
+            // Payload: path_len(u32 LE) + path + data_len(u32 LE) + data
+            if (frame.payload.len < 8) {
+                setError(session, "Invalid ExecFile payload", .{});
+                appendErrorFrame(&response, session, "Invalid ExecFile payload");
+                return jniNewByteArrayOrNull(env, response.items);
+            }
+            var path_len_buf: [4]u8 = undefined;
+            @memcpy(&path_len_buf, frame.payload[0..4]);
+            const path_len = std.mem.readInt(u32, &path_len_buf, .little);
+            const path_end = 4 + path_len;
+            if (path_end > frame.payload.len) {
+                setError(session, "ExecFile path truncated", .{});
+                appendErrorFrame(&response, session, "ExecFile path truncated");
+                return jniNewByteArrayOrNull(env, response.items);
+            }
+            const data_len_start = path_end;
+            const data_len_end = data_len_start + 4;
+            if (data_len_end > frame.payload.len) {
+                setError(session, "ExecFile data_len truncated", .{});
+                appendErrorFrame(&response, session, "ExecFile data_len truncated");
+                return jniNewByteArrayOrNull(env, response.items);
+            }
+            var data_len_buf: [4]u8 = undefined;
+            @memcpy(&data_len_buf, frame.payload[data_len_start..data_len_end]);
+            const data_len = std.mem.readInt(u32, &data_len_buf, .little);
+            if (data_len_end + data_len > frame.payload.len) {
+                setError(session, "ExecFile data truncated", .{});
+                appendErrorFrame(&response, session, "ExecFile data truncated");
+                return jniNewByteArrayOrNull(env, response.items);
+            }
+            const path = frame.payload[4..path_end];
+            const data = frame.payload[data_len_end .. data_len_end + data_len];
+            if (execFileWrite(session, path, data)) {
+                ipc.appendMessage(allocator, &response, .Ack, &.{}) catch {};
+            } else {
+                appendErrorFrame(&response, session, "ExecFile write failed");
+            }
         },
         else => {
             setError(session, "Unsupported IPC tag {}", .{@intFromEnum(frame.header.tag)});

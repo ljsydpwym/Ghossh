@@ -133,6 +133,8 @@ class TerminalSessionRepository private constructor(
     fun writeKey(key: Int, codepoint: Int, mods: Int, action: Int, utf8: String? = null) =
         engine.writeKey(key, codepoint, mods, action, utf8)
 
+    fun sendFile(remotePath: String, data: ByteArray) = engine.sendFile(remotePath, data)
+
     fun writeText(text: String) = engine.writeText(text)
 
     fun sendFocusEvent(focused: Boolean) = engine.sendFocusEvent(focused)
