@@ -94,6 +94,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 
@@ -116,20 +117,23 @@ private fun transferImageToHost(
             val timestamp = System.currentTimeMillis()
             val filename = "ghossh_" + timestamp + ".png"
 
-            // Build a single command that suppresses echo, writes via heredoc, decodes, and reports
+            // First disable echo so heredoc content isn't echoed back
+            vm.onTextInput("stty -echo\n")
+            delay(50)
+
+            // Build the heredoc command to transfer the file
             val cmd = buildString {
-                appendLine("stty -echo")
                 append("cat > /tmp/").append(filename).append(".b64 << 'GHOSSH_EOF'").appendLine()
                 appendLine(base64)
                 appendLine("GHOSSH_EOF")
                 append("base64 -d /tmp/").append(filename).append(".b64 > /tmp/").append(filename).appendLine()
                 append("rm /tmp/").append(filename).append(".b64").appendLine()
-                appendLine("stty echo")
                 append("echo 'Image saved: /tmp/").append(filename).append("'").appendLine()
             }
-
-            // Write directly to SSH (no throttling, no Ghostty rendering)
             vm.onTextInput(cmd)
+
+            delay(100)
+            vm.onTextInput("stty echo\n")
         } catch (e: Exception) {
             android.util.Log.e("TerminalScreen", "transferImageToHost failed", e)
             android.widget.Toast.makeText(context, "Failed: " + e.message, android.widget.Toast.LENGTH_SHORT).show()
