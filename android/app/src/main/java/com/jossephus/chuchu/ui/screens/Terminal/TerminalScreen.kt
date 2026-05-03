@@ -103,7 +103,7 @@ private fun transferImageToHost(
     vm: TerminalViewModel,
 ) {
     val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-        ioScope.launch {
+    ioScope.launch {
         try {
             val inputStream = context.contentResolver.openInputStream(uri)
             if (inputStream == null) {
@@ -115,9 +115,21 @@ private fun transferImageToHost(
             val base64 = Base64.getEncoder().encodeToString(bytes)
             val timestamp = System.currentTimeMillis()
             val filename = "ghossh_" + timestamp + ".png"
-            vm.onPasteText(
-                "echo '" + base64 + "' | base64 -d > /tmp/" + filename + " && echo 'Image saved: /tmp/" + filename + "'\n"
-            )
+
+            // Build a single command that suppresses echo, writes via heredoc, decodes, and reports
+            val cmd = buildString {
+                appendLine("stty -echo")
+                append("cat > /tmp/").append(filename).append(".b64 << 'GHOSSH_EOF'").appendLine()
+                appendLine(base64)
+                appendLine("GHOSSH_EOF")
+                append("base64 -d /tmp/").append(filename).append(".b64 > /tmp/").append(filename).appendLine()
+                append("rm /tmp/").append(filename).append(".b64").appendLine()
+                appendLine("stty echo")
+                append("echo 'Image saved: /tmp/").append(filename).append("'").appendLine()
+            }
+
+            // Write directly to SSH (no throttling, no Ghostty rendering)
+            vm.onTextInput(cmd)
         } catch (e: Exception) {
             android.util.Log.e("TerminalScreen", "transferImageToHost failed", e)
             android.widget.Toast.makeText(context, "Failed: " + e.message, android.widget.Toast.LENGTH_SHORT).show()
