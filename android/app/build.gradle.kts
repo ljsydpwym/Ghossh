@@ -25,6 +25,8 @@ android {
         versionCode = 2
         versionName = "1.0"
 
+        buildConfigField("long", "BUILD_TIME", System.currentTimeMillis().toString() + "L")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
@@ -72,6 +74,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

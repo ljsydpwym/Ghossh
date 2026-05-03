@@ -42,6 +42,7 @@ import com.jossephus.chuchu.ui.components.ChuTextField
 import com.jossephus.chuchu.ui.terminal.TerminalCustomKeyGroup
 import com.jossephus.chuchu.ui.theme.ChuColors
 import com.jossephus.chuchu.ui.theme.ChuTypography
+import com.jossephus.ghossh.BuildConfig
 import com.jossephus.chuchu.ui.theme.GhosttyThemeRegistry
 
 enum class SettingsCategory(val label: String) {
@@ -213,6 +214,19 @@ private fun GeneralSettings(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            ChuText("Version", style = typography.body, color = colors.textSecondary)
+            ChuText(
+                BuildConfig.VERSION_NAME + " (" + formatBuildTime(BuildConfig.BUILD_TIME) + ")",
+                style = typography.labelSmall,
+                color = colors.textMuted,
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+
         ChuText("Theme", style = typography.title)
 
         ChuButton(
@@ -288,4 +302,9 @@ private fun GeneralSettings(
             }
         }
     }
+}
+private fun formatBuildTime(timestamp: Long): String {
+    if (timestamp <= 0L) return "unknown"
+    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+    return sdf.format(java.util.Date(timestamp))
 }
