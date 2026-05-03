@@ -113,13 +113,23 @@ private fun transferImageToHost(
             }
             val bytes = inputStream.readBytes()
             inputStream.close()
+
+            // Detect MIME type for correct extension
+            val mimeType = context.contentResolver.getType(uri) ?: "image/png"
+            val ext = when {
+                mimeType.contains("jpeg") || mimeType.contains("jpg") -> ".jpg"
+                mimeType.contains("png") -> ".png"
+                mimeType.contains("gif") -> ".gif"
+                mimeType.contains("webp") -> ".webp"
+                else -> ".bin"
+            }
             val timestamp = System.currentTimeMillis()
-            val filename = "ghossh_" + timestamp + ".png"
+            val filename = "ghossh_" + timestamp + ext
             val remotePath = "/tmp/" + filename
 
             // Transfer directly via SSH exec channel (no PTY, no echo, no base64)
             vm.sendFile(remotePath, bytes)
-            vm.onTextInput("echo 'Image saved: " + remotePath + "'\n")
+            vm.onTextInput("echo '📷 File: " + remotePath + " (${bytes.size} bytes, " + mimeType + ")'\n")
         } catch (e: Exception) {
             android.util.Log.e("TerminalScreen", "transferImageToHost failed", e)
             android.widget.Toast.makeText(context, "Failed: " + e.message, android.widget.Toast.LENGTH_SHORT).show()
