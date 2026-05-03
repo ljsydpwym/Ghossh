@@ -84,6 +84,46 @@ import com.jossephus.chuchu.ui.theme.ChuTypography
 import com.jossephus.chuchu.ui.theme.GhosttyThemeRegistry
 import com.jossephus.chuchu.ui.theme.toRgbIntArray
 import com.jossephus.chuchu.ui.theme.toTerminalPaletteBytes
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
+import java.io.File
+import java.util.Base64
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+
+private fun transferImageToHost(
+    context: android.content.Context,
+    uri: Uri,
+    vm: TerminalViewModel,
+) {
+    val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        ioScope.launch {
+        try {
+            val inputStream = context.contentResolver.openInputStream(uri)
+            if (inputStream == null) {
+                android.widget.Toast.makeText(context, "Cannot read image", android.widget.Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val bytes = inputStream.readBytes()
+            inputStream.close()
+            val base64 = Base64.getEncoder().encodeToString(bytes)
+            val timestamp = System.currentTimeMillis()
+            val filename = "ghossh_" + timestamp + ".png"
+            vm.onPasteText(
+                "echo '" + base64 + "' | base64 -d > /tmp/" + filename + " && echo 'Image saved: /tmp/" + filename + "'\n"
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("TerminalScreen", "transferImageToHost failed", e)
+            android.widget.Toast.makeText(context, "Failed: " + e.message, android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+}
 
 private fun TerminalViewModel.dispatchTextWithModifierState(
     text: String,
@@ -111,6 +151,8 @@ private fun TerminalCustomActionsFab(
     onActionClick: (TerminalCustomAction) -> Unit,
     onDisconnect: (() -> Unit)? = null,
     onSettings: (() -> Unit)? = null,
+    onPickImage: (() -> Unit)? = null,
+    onTakePhoto: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val colors = ChuColors.current
@@ -146,6 +188,30 @@ private fun TerminalCustomActionsFab(
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
                         ) {
                             ChuText("⚙ Settings", style = typography.label)
+                        }
+                    }
+                    if (onPickImage != null) {
+                        ChuButton(
+                            onClick = {
+                                onPickImage()
+                                expanded = false
+                            },
+                            variant = ChuButtonVariant.Outlined,
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                        ) {
+                            ChuText("\uD83D\uDCF7 Image", style = typography.label)
+                        }
+                    }
+                    if (onTakePhoto != null) {
+                        ChuButton(
+                            onClick = {
+                                onTakePhoto()
+                                expanded = false
+                            },
+                            variant = ChuButtonVariant.Outlined,
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                        ) {
+                            ChuText("\uD83D\uDCF8 Camera", style = typography.label)
                         }
                     }
                     if (onDisconnect != null) {
@@ -261,6 +327,26 @@ fun TerminalScreen(
     var selectionResetKey by remember { mutableStateOf(0) }
     var showPassphrasePrompt by remember { mutableStateOf(false) }
     var passphraseInput by remember { mutableStateOf("") }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+    ) { uri: Uri? ->
+        if (uri != null) {
+            transferImageToHost(context, uri, vm)
+        }
+    }
+    val cameraTempFile = remember {
+        File(context.cacheDir, "images").also { it.mkdirs() }
+            .let { File(it, "ghossh_camera_" + System.currentTimeMillis() + ".jpg") }
+    }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+    ) { success: Boolean ->
+        if (success) {
+            transferImageToHost(context, Uri.fromFile(cameraTempFile), vm)
+        }
+    }
+
 
     LaunchedEffect(hostId) {
         vm.setSelectedHostId(hostId)
@@ -640,6 +726,15 @@ fun TerminalScreen(
                             },
                             onDisconnect = { vm.disconnect() },
                             onSettings = { showSettings = true },
+                            onPickImage = { imagePickerLauncher.launch("image/*") },
+                            onTakePhoto = {
+                                val photoUri = FileProvider.getUriForFile(
+                                    context,
+                                    context.packageName + ".fileprovider",
+                                    cameraTempFile,
+                                )
+                                cameraLauncher.launch(photoUri)
+                            },
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
                                 .padding(end = 14.dp, bottom = 12.dp),
