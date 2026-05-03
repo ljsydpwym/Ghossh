@@ -711,8 +711,11 @@ export fn Java_com_jossephus_chuchu_service_ssh_NativeSshBridge_nativeOpenShell(
     defer allocator.free(term_buf);
     @memcpy(term_buf[0..term_slice.len], term_slice);
 
+    // PTY modes: disable ECHO (opcode 53 = SSH_TERM_ECHO, value = 0)
+    const pty_modes = [_]u8{ 53, 0, 0, 0, 0, 0 };
+
     while (true) {
-        const pty_rc = c.libssh2_channel_request_pty_ex(channel.?, term_buf.ptr, @intCast(term_slice.len), null, 0, cols, rows, width_px, height_px);
+        const pty_rc = c.libssh2_channel_request_pty_ex(channel.?, term_buf.ptr, @intCast(term_slice.len), &pty_modes, @intCast(pty_modes.len), cols, rows, width_px, height_px);
         if (pty_rc == 0) break;
         if (pty_rc != c.LIBSSH2_ERROR_EAGAIN) {
             setLibssh2Error(session, "PTY request failed", pty_rc);

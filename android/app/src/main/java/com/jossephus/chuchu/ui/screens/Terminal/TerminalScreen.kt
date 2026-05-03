@@ -117,11 +117,7 @@ private fun transferImageToHost(
             val timestamp = System.currentTimeMillis()
             val filename = "ghossh_" + timestamp + ".png"
 
-            // First disable echo so heredoc content isn't echoed back
-            vm.onTextInput("stty -echo\n")
-            delay(50)
-
-            // Build the heredoc command to transfer the file
+            // Build the heredoc command to transfer the file (PTY has echo disabled)
             val cmd = buildString {
                 append("cat > /tmp/").append(filename).append(".b64 << 'GHOSSH_EOF'").appendLine()
                 appendLine(base64)
@@ -131,9 +127,6 @@ private fun transferImageToHost(
                 append("echo 'Image saved: /tmp/").append(filename).append("'").appendLine()
             }
             vm.onTextInput(cmd)
-
-            delay(100)
-            vm.onTextInput("stty echo\n")
         } catch (e: Exception) {
             android.util.Log.e("TerminalScreen", "transferImageToHost failed", e)
             android.widget.Toast.makeText(context, "Failed: " + e.message, android.widget.Toast.LENGTH_SHORT).show()
