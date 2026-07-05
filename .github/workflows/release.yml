@@ -1,46 +1,41 @@
+name: Release
+
 on:
   push:
     tags:
-      - "*"
-  workflow_dispatch:
-    inputs:
-      release_tag:
-        description: "Tag to publish (required for manual runs)"
-        required: false
-        type: string
+      - "v*"
 
-name: Release
+permissions:
+  contents: write
+  id-token: write
 
 jobs:
   release:
-    permissions:
-      contents: write
-      id-token: write
+    name: Build & Release APK
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: nix shell
-        run: nix develop -L --verbose
-
-      - name: build chuchu_jni
+      - name: Build native JNI library
         run: |
           nix develop -c bash -c '
             set -e
             cd zig-src
-            zig build -Doptimize=ReleaseSmall jni 
+            zig build -Doptimize=ReleaseSmall jni
           '
 
-      - name: generate release key
+      - name: Generate release key
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
         run: |
           cd android/app/ && echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > key.jks
 
-      - name: build android release
-        env: 
+      - name: Build release APK
+        env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -49,17 +44,14 @@ jobs:
             set -e
             cd android
             chmod +x ./gradlew
-            if [ -f local.properties ]; then chmod -w local.properties; fi
             ./gradlew assembleRelease
           '
 
-      - name: upload release
-        if: ${{ github.ref_type == 'tag' || inputs.release_tag != '' }}
+      - name: Upload release APK
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || inputs.release_tag }}
-          target_commitish: ${{ github.sha }}
+          tag_name: ${{ github.ref_name }}
           draft: true
           files: |
-            ./android/app/build/outputs/apk/release/*.apk
+            android/app/build/outputs/apk/release/*.apk
           fail_on_unmatched_files: true
