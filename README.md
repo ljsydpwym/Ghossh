@@ -15,14 +15,6 @@
 
 ---
 
-<table align="center" cellpadding="10">
-  <tr>
-    <td><img src="./assets/sample-3.jpg" alt="Ghossh sample 3" height="420" /></td>
-    <td><img src="./assets/sample-2.jpg" alt="Ghossh sample 2" height="420" /></td>
-    <td><img src="./assets/sample-1.jpg" alt="Ghossh sample 1" height="420" /></td>
-    <td><img src="./assets/sample-4.jpg" alt="Ghossh sample 4" height="420" /></td>
-</table>
-
 Ghossh is a native Android SSH client powered by libghostty, with a terminal-first Compose UI and support for both standard SSH and Tailscale SSH workflows.
 
 This project is based on [Chuchu](https://github.com/jossephus/chuchu) by [jossephus](https://github.com/jossephus) — the original Android SSH client for Android. Ghossh continues development with its own direction, improvements, and features.
