@@ -36,7 +36,7 @@ android {
 
     signingConfigs {
         create("release") {
-            val keystoreFile = file("ghossh-key.jks")
+            val keystoreFile = file("keystore/ghossh-key.jks")
             val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
             val keyAliasEnv = System.getenv("KEY_ALIAS")
             val keyPasswordEnv = System.getenv("KEY_PASSWORD")

@@ -29,3 +29,4 @@ android/app/key.jks
 zig-src/.zig-cache/
 zig-src/zig-pkg/
 zig-src/test_*
+android/app/keystore/
