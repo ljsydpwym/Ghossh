@@ -1,0 +1,105 @@
+package com.ljsydpwym.ghossh.data.repository
+
+import android.content.Context
+import android.content.SharedPreferences
+import com.ljsydpwym.ghossh.ui.terminal.TerminalAccessoryLayoutStore
+import com.ljsydpwym.ghossh.ui.terminal.TerminalCustomActionStore
+import com.ljsydpwym.ghossh.ui.terminal.TerminalCustomKeyGroup
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+class SettingsRepository(context: Context) {
+
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("chuchu_settings", Context.MODE_PRIVATE)
+
+    private val _themeName = MutableStateFlow(prefs.getString(KEY_THEME, DEFAULT_THEME) ?: DEFAULT_THEME)
+    val themeName: StateFlow<String> = _themeName.asStateFlow()
+
+    private val _accessoryLayoutIds = MutableStateFlow(loadAccessoryLayoutIds())
+    val accessoryLayoutIds: StateFlow<List<String>> = _accessoryLayoutIds.asStateFlow()
+
+    private val _accessoryRowCount = MutableStateFlow(loadAccessoryRowCount())
+    val accessoryRowCount: StateFlow<Int> = _accessoryRowCount.asStateFlow()
+
+    private val _accessoryItemsPerRow = MutableStateFlow(loadAccessoryItemsPerRow())
+    val accessoryItemsPerRow: StateFlow<Int> = _accessoryItemsPerRow.asStateFlow()
+
+    private val _terminalCustomKeyGroups = MutableStateFlow(loadTerminalCustomKeyGroups())
+    val terminalCustomKeyGroups: StateFlow<List<TerminalCustomKeyGroup>> = _terminalCustomKeyGroups.asStateFlow()
+
+    fun setTheme(name: String) {
+        prefs.edit().putString(KEY_THEME, name).apply()
+        _themeName.value = name
+    }
+
+    fun setAccessoryLayoutIds(ids: List<String>) {
+        val normalized = TerminalAccessoryLayoutStore.normalizeIds(ids)
+        prefs.edit().putString(KEY_ACCESSORY_LAYOUT, normalized.joinToString(separator = ",")).apply()
+        _accessoryLayoutIds.value = normalized
+    }
+
+    fun setAccessoryRowCount(count: Int) {
+        val clamped = count.coerceIn(1, 2)
+        prefs.edit().putInt(KEY_ACCESSORY_ROW_COUNT, clamped).apply()
+        _accessoryRowCount.value = clamped
+    }
+
+    fun setAccessoryItemsPerRow(count: Int) {
+        val clamped = count.coerceIn(3, 12)
+        prefs.edit().putInt(KEY_ACCESSORY_ITEMS_PER_ROW, clamped).apply()
+        _accessoryItemsPerRow.value = clamped
+    }
+
+    fun setTerminalCustomKeyGroups(groups: List<TerminalCustomKeyGroup>) {
+        val normalized = TerminalCustomActionStore.normalize(groups)
+        val serialized = TerminalCustomActionStore.serialize(normalized)
+        prefs.edit().putString(KEY_TERMINAL_CUSTOM_ACTIONS, serialized).apply()
+        _terminalCustomKeyGroups.value = normalized
+    }
+
+    private fun loadAccessoryLayoutIds(): List<String> {
+        val stored = prefs.getString(KEY_ACCESSORY_LAYOUT, null)
+            ?: return TerminalAccessoryLayoutStore.defaultLayoutIds()
+        if (stored.isBlank()) {
+            return emptyList()
+        }
+        return TerminalAccessoryLayoutStore.normalizeIds(
+            stored.split(',').map(String::trim).filter(String::isNotEmpty),
+        )
+    }
+
+    private fun loadAccessoryRowCount(): Int {
+        return prefs.getInt(KEY_ACCESSORY_ROW_COUNT, DEFAULT_ROW_COUNT).coerceIn(1, 2)
+    }
+
+    private fun loadAccessoryItemsPerRow(): Int {
+        return prefs.getInt(KEY_ACCESSORY_ITEMS_PER_ROW, DEFAULT_ITEMS_PER_ROW).coerceIn(3, 12)
+    }
+
+    private fun loadTerminalCustomKeyGroups(): List<TerminalCustomKeyGroup> {
+        val stored = prefs.getString(KEY_TERMINAL_CUSTOM_ACTIONS, null)
+        return TerminalCustomActionStore.parse(stored)
+    }
+
+    companion object {
+        private const val KEY_THEME = "theme_name"
+        private const val KEY_ACCESSORY_LAYOUT = "terminal_accessory_layout"
+        private const val KEY_ACCESSORY_ROW_COUNT = "terminal_accessory_row_count"
+        private const val KEY_ACCESSORY_ITEMS_PER_ROW = "terminal_accessory_items_per_row"
+        private const val KEY_TERMINAL_CUSTOM_ACTIONS = "terminal_custom_actions"
+        private const val DEFAULT_THEME = "Catppuccin Mocha"
+        private const val DEFAULT_ROW_COUNT = 1
+        private const val DEFAULT_ITEMS_PER_ROW = 7
+
+        @Volatile
+        private var instance: SettingsRepository? = null
+
+        fun getInstance(context: Context): SettingsRepository {
+            return instance ?: synchronized(this) {
+                instance ?: SettingsRepository(context.applicationContext).also { instance = it }
+            }
+        }
+    }
+}

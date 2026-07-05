@@ -12,10 +12,10 @@
 -renamesourcefileattribute SourceFile
 
 # === JNI: keep native bridge classes ===
--keepclassmembers class com.jossephus.chuchu.service.terminal.GhosttyBridge {
+-keepclassmembers class com.ljsydpwym.ghossh.service.terminal.GhosttyBridge {
     *** native*;
 }
--keepclassmembers class com.jossephus.chuchu.service.ssh.NativeSshBridge {
+-keepclassmembers class com.ljsydpwym.ghossh.service.ssh.NativeSshBridge {
     *** native*;
 }
 

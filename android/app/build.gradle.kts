@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.jossephus.ghossh"
+    namespace = "com.ljsydpwym.ghossh"
     compileSdk {
         version = release(36)
     }
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.jossephus.ghossh"
+        applicationId = "com.ljsydpwym.ghossh"
         minSdk = 24
         targetSdk = 36
         versionCode = 2

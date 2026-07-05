@@ -1,4 +1,4 @@
-package com.jossephus.chuchu
+package com.ljsydpwym.ghossh
 
 import org.junit.Test
 

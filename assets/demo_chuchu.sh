@@ -11,7 +11,7 @@
 set -e
 
 # Configuration
-PACKAGE_NAME="com.jossephus.chuchu"
+PACKAGE_NAME="com.ljsydpwym.ghossh"
 # Use relative activity name (with leading dot) for am start
 MAIN_ACTIVITY=".MainActivity"
 OUTPUT_VIDEO="chuchu_demo_$(date +%Y%m%d_%H%M%S).mp4"
