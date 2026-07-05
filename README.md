@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/logo.png" alt="Ghossh logo" width="48" height="48" />
+  <img src="./assets/logo.svg" alt="Ghossh logo" width="48" height="48" />
 </p>
 
 <h1 align="center">Ghossh</h1>

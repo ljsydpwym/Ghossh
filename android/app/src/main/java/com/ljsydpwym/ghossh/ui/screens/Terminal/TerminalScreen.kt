@@ -86,7 +86,6 @@ import com.ljsydpwym.ghossh.ui.theme.ChuTypography
 import com.ljsydpwym.ghossh.ui.theme.GhosttyThemeRegistry
 import com.ljsydpwym.ghossh.ui.theme.toRgbIntArray
 import com.ljsydpwym.ghossh.ui.theme.toTerminalPaletteBytes
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
