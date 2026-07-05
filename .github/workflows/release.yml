@@ -18,6 +18,8 @@ jobs:
   release:
     name: Build & Release APK
     runs-on: ubuntu-latest
+    env:
+      HAS_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 != '' }}
 
     steps:
       - name: Checkout
@@ -37,7 +39,7 @@ jobs:
           '
 
       - name: Generate release key
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        if: env.HAS_KEYSTORE == 'true'
         run: |
           cd android/app/ && echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > key.jks
 
