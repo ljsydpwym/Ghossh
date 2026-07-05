@@ -92,9 +92,3 @@ Or use the Makefile shortcut:
 make build   # builds native lib
 make app     # builds + installs + launches
 ```
-
-## Demo
-
-<p align="center">
-  <img src="./assets/chuchu_demo.gif" alt="Ghossh demo" width="400" />
-</p>
