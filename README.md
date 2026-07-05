@@ -5,12 +5,12 @@
 <h1 align="center">Ghossh</h1>
 
 <p align="center">
- A Modern, Native Android SSH client powered by libghostty
+ A modern, native Android SSH client powered by libghostty
 </p>
 
 <p align="center">
   <a href="https://github.com/ljsydpwym/ghossh/releases/latest">Download Latest</a> ·
-  <a href="https://github.com/ljsydpwym/ghossh/releases/">ChangeLog</a> ·
+  <a href="https://github.com/ljsydpwym/ghossh/releases/">Changelog</a>
 </p>
 
 ---
@@ -25,72 +25,81 @@
 
 Ghossh is a native Android SSH client powered by libghostty, with a terminal-first Compose UI and support for both standard SSH and Tailscale SSH workflows.
 
-This project is based on [Chuchu](https://github.com/jossephus/chuchu) by [jossephus](https://github.com/jossephus) — the original native Android SSH client. Ghossh continues the development with its own direction, improvements, and features.
+This project is based on [Chuchu](https://github.com/jossephus/chuchu) by [jossephus](https://github.com/jossephus) — the original Android SSH client for Android. Ghossh continues development with its own direction, improvements, and features.
 
 ### Features
-- tailscale, ssh password + key authentication
-- image display using libghostty's kitty image protocol support
-- more than 400 themes from the official ghostty repository
-- configurable accessory keys
-- beautiful and working terminal renderer with fully working resize, scrollback, focus, modifier keys, mouse actions
-- clickable links in terminal output
+- SSH (password + key) and Tailscale SSH authentication
+- Kitty image protocol support for inline images
+- 400+ themes from the official Ghostty repository
+- Configurable accessory keys
+- Full terminal renderer with resize, scrollback, focus, modifier keys, and mouse support
+- Clickable links in terminal output
 
 ## Status
 
-Ghossh is in active development. I am daily driving it and improving any issues I find along the way. Join the journey and report any bugs you find. Contributions are welcome!
+Ghossh is in active development. I daily drive it and fix issues as I find them. Found a bug? Open an issue or send a PR.
 
 ### Getting Started
 
-Checkout our releases and download the APK from there. The latest release will have the latest changes.
+Download the latest APK from the [Releases](https://github.com/ljsydpwym/ghossh/releases) page and side-load it.
 
-I don't have a personal Play Store account right now (and I can't open one because of the payment limitation in my country, feel free to contact me if you want to publish it.)
-
+> **Note:** I don't have a Play Store account, so APK releases are the only distribution method for now.
 
 ## Stack
 
-- Kotlin + Jetpack Compose for the Android app
-- Zig for native build orchestration and JNI/native bridge code
-- Ghostty VT for terminal emulation
-- `libssh2` + `openssl` for the current native SSH path
-- Room for local data storage
+- **Kotlin + Jetpack Compose** — Android UI
+- **Zig** — native build orchestration and JNI bridge
+- **Ghostty VT** — terminal emulation engine
+- **libssh2 + OpenSSL** — SSH transport
+- **Room** — local database
 
+## Development
 
-### Development - Prerequisites
+### Prerequisites
 
-If you have nix installed, the following three steps will get you started:
-
-1. `nix develop` — sets you up with everything you need
-2. `make build` — builds the native code
-3. `make app` — builds the APK and installs it on a connected device
-
-If you don't have nix installed, you will need:
-
-1. Setup tools:
-   - Android Studio — sets up Android SDK, Android NDK and Java runtime (JDK 17+)
-   - Zig 0.15.2
-2. Build the native library:
-
-Set `ANDROID_NDK_HOME` or `ANDROID_NDK_ROOT`, then build the JNI library for Android arm64:
+With Nix:
 
 ```sh
-zig build jni -Dtarget=aarch64-linux-android
+nix develop
 ```
 
-That copies `libchuchu_jni.so` into `app/src/main/jniLibs/arm64-v8a/`.
+Without Nix:
 
-3. From Android Studio run:
+- Android Studio (SDK, NDK, JDK 17+)
+- Zig 0.15.2
+
+### Build
 
 ```sh
-./gradlew assembleDebug
+# 1. Build the native JNI library
+zig build jni -Dtarget=aarch64-linux-android
+
+# 2. Build the APK
+cd android && ./gradlew assembleDebug
+```
+
+The JNI build copies `libchuchu_jni.so` into `android/app/src/main/jniLibs/arm64-v8a/`.
+
+### Install on device
+
+```sh
+cd android && ./gradlew installDebug
+```
+
+Or use the Makefile shortcut:
+
+```sh
+make build   # builds native lib
+make app     # builds + installs + launches
 ```
 
 ## Inspiration
 
-I have been using [vvterm](https://github.com/vivy-company/vvterm) on iOS for the past few weeks and I really liked it. This project came from my desire to have a native SSH client for Android.
+I've been using [vvterm](https://github.com/vivy-company/vvterm) on iOS and wanted something similar for Android. Ghossh is the result.
 
 ## Project Name
 
-Ghossh is named after one of my favorite characters from the Amharic book [Yesinbit Kelemat](https://www.goodreads.com/book/show/30759971) — it means "colors of adiós".
+Ghossh is named after one of my favorite characters from the Amharic book [Yesinbit Kelemat](https://www.goodreads.com/book/show/30759971) — "colors of adiós".
 
 ## Demo
 
