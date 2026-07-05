@@ -93,14 +93,6 @@ make build   # builds native lib
 make app     # builds + installs + launches
 ```
 
-## Inspiration
-
-I've been using [vvterm](https://github.com/vivy-company/vvterm) on iOS and wanted something similar for Android. Ghossh is the result.
-
-## Project Name
-
-Ghossh is named after one of my favorite characters from the Amharic book [Yesinbit Kelemat](https://www.goodreads.com/book/show/30759971) — "colors of adiós".
-
 ## Demo
 
 <p align="center">
